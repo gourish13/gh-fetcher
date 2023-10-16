@@ -1,4 +1,4 @@
-package oss.gourish.simple;
+package oss.gourish.simple.ghfetch;
 
 public class Main {
     public static void main(String[] args) {
