@@ -6,27 +6,46 @@ import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 public class YamlConfigProvider implements IDefaultValueProvider {
-    private Properties readProperties() throws IOException {
-        String filePath = "./";
-        String os = System.getProperty("os.name");
+    private String getConfigFilePath() {
+        String os = System.getProperty("os.name").toLowerCase();
 
-        if (os.equalsIgnoreCase("Linux"))
-            filePath = System.getenv("XDG_CONFIG_HOME") != null
-                    ? System.getenv("XDG_CONFIG_HOME")
-                    : (System.getenv("HOME") + "/.config") + "/gh-fetcher/config.yml";
-        // TODO: Implement config file path for Mac and Windows
+        if (os.indexOf("windows") > 0)
+            return System.getenv("USERPROFILE") + "\\AppData\\Local\\gh-fetcher\\config.yml";
+        if (os.indexOf("mac") > 0)
+            return System.getenv("HOME") + "/.gh_fetcher.yml";
+        // Linux: gh-fetcher/config.yml in $XDG_CONFIG_HOME or $HOME/.config.
+        return (System.getenv("XDG_CONFIG_HOME") == null
+                ? System.getenv("HOME") + "/.config"
+                : System.getenv("XDG_CONFIG_HOME")) + "/gh-fetcher/config.yml";
+    }
 
+    Map<String, Object> getYamlConfigProperties() {
+        String filePath = getConfigFilePath();
         // Read Yaml config file
-        InputStream inputStream = new FileInputStream(filePath);
-        Yaml yaml = new Yaml();
-        Map<String, Object> map = yaml.load(inputStream);
+        Map<String, Object> map;
+        try {
+            InputStream inputStream = new FileInputStream(filePath);
+            Yaml yaml = new Yaml();
+            map = yaml.load(inputStream);
+        } catch (FileNotFoundException e) {
+            map = null;
+        }
+        // If no config make map empty rather than null.
+        if (map == null)
+            map = new HashMap<>();
 
+        return map;
+    }
+
+    Properties readProperties() {
+        Map<String, Object> map = getYamlConfigProperties();
         Properties properties = new Properties();
         // Convert Yaml to Properties
         for (Map.Entry<String, Object> mapEntry : map.entrySet())
@@ -36,7 +55,7 @@ public class YamlConfigProvider implements IDefaultValueProvider {
     }
 
     @Override
-    public String defaultValue(ArgSpec argSpec) throws Exception {
+    public String defaultValue(ArgSpec argSpec) {
         // Get property values
         Properties properties = readProperties();
 
