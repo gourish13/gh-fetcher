@@ -1,6 +1,7 @@
 package oss.gourish.simple.ghfetch.cli;
 
 import oss.gourish.simple.ghfetch.config.YamlConfigProvider;
+import oss.gourish.simple.ghfetch.utils.ParameterRegexChecker;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.IExitCodeGenerator;
@@ -15,9 +16,9 @@ import java.util.Scanner;
         version = "0.1.0",
         description = "Downloads a specific file/folder from Github Repository",
         defaultValueProvider = YamlConfigProvider.class)
-public class GithubFetcher implements Runnable, IExitCodeGenerator {
-    @Parameters(index = "0", paramLabel = "SRC",
-            description = "Github repository path of file or folder starting with author/repo")
+public class GitHubFetcher implements Runnable, IExitCodeGenerator {
+    @Parameters(index = "0", paramLabel = "SRC", converter = ParameterRegexChecker.class,
+            description = "Github repository path of file or folder starting with owner/repository")
     private String repoPath;
     @Parameters(index = "1", paramLabel = "DEST", arity = "0..1", defaultValue = ".",
             description = "Local path where file or folder is to be downloaded")
@@ -29,6 +30,7 @@ public class GithubFetcher implements Runnable, IExitCodeGenerator {
             description = "GIthub repository branch name, default branch will be used if not specified",
             arity = "0..1")
     private String branchName;
+    private CliOperations cliOperations;
 
     public String getRepoPath() {
         return repoPath;
@@ -58,6 +60,20 @@ public class GithubFetcher implements Runnable, IExitCodeGenerator {
     @Override
     public void run() {
         promptTokenIfMissing();
+        cliOperations = new CliOperations();
+        detectOperationTypeAndStart();
+    }
+
+    public void detectOperationTypeAndStart() {
+        String[] repoDetails = repoPath.split("/");
+        if (repoDetails.length == 2) {
+            cliOperations.downloadRepoAsTarball(repoDetails, token, branchName, destPath);
+            return;
+        }
+        // TODO : Download file/folder inside repository.
+        System.out.println("Not entire repo");
+
+
     }
 
     @Override
