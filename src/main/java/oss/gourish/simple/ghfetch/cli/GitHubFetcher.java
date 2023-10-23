@@ -70,10 +70,7 @@ public class GitHubFetcher implements Runnable, IExitCodeGenerator {
             cliOperations.downloadRepoAsTarball(repoDetails, token, branchName, destPath);
             return;
         }
-        // TODO : Download file/folder inside repository.
-        System.out.println("Not entire repo");
-
-
+        cliOperations.downloadRepoContents(repoDetails, token, branchName, destPath);
     }
 
     @Override

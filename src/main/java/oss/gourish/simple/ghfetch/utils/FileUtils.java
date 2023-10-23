@@ -13,7 +13,7 @@ public class FileUtils {
 
     private static FileUtils fileUtils = null;
 
-    public static FileUtils getFileUtils() {
+    public static FileUtils getInstance() {
         return fileUtils = fileUtils == null ? new FileUtils() : fileUtils;
     }
 
